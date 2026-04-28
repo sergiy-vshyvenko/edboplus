@@ -149,6 +149,7 @@ EDBOplus().generate_reaction_scope(
 |---|---|
 | [`examples/tutorials/1_CLI_example.ipynb`](examples/tutorials/1_CLI_example.ipynb) | Basic workflow: scope generation, initialization, iterative optimization |
 | [`examples/tutorials/PCA_example.ipynb`](examples/tutorials/PCA_example.ipynb) | PCA solvent encodings: auto-detection, mixed encoding types, reading model predictions |
+| [`examples/tutorials/OHE_vs_PCA_benchmark.ipynb`](examples/tutorials/OHE_vs_PCA_benchmark.ipynb) | Side-by-side benchmark: OHE vs PCA encoding on the BMS cross-coupling dataset (yield + cost) |
 
 ---
 
