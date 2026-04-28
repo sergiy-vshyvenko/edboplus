@@ -12,7 +12,11 @@ from botorch.optim import optimize_acqf_discrete
 from botorch.sampling.samplers import SobolQMCNormalSampler, IIDNormalSampler
 from botorch.utils.multi_objective.box_decompositions import \
     NondominatedPartitioning
-from idaes.surrogate.pysmo.sampling import LatinHypercubeSampling, CVTSampling
+try:
+    from idaes.surrogate.pysmo.sampling import LatinHypercubeSampling, CVTSampling
+    _IDAES_AVAILABLE = True
+except ImportError:  # botorch >=0.9 / idaes not installed — use scipy fallback
+    _IDAES_AVAILABLE = False
 import numpy as np
 from ordered_set import OrderedSet
 import pandas as pd
@@ -100,9 +104,22 @@ class EDBOplus:
             if sampling_method == 'random':
                 samples = df_sampling.sample(n=batch, random_state=seed)
             elif sampling_method.lower() == 'lhs':
-                idaes = LatinHypercubeSampling(df_sampling, batch, sampling_type="selection")
+                if _IDAES_AVAILABLE:
+                    idaes = LatinHypercubeSampling(df_sampling, batch, sampling_type="selection")
+                else:
+                    from scipy.stats import qmc as _qmc
+                    sampler = _qmc.LatinHypercube(d=df_sampling.shape[1], seed=seed)
+                    unit_pts = sampler.random(n=batch)
+                    mins = df_sampling.min().values
+                    maxs = df_sampling.max().values
+                    scaled = _qmc.scale(unit_pts, mins, maxs)
+                    idx = [int(np.argmin(cdist([p], df_sampling.values, metric='cityblock'))) for p in scaled]
+                    samples = df_sampling.iloc[idx]
             elif sampling_method.lower() == 'cvt':
-                idaes = CVTSampling(df_sampling, batch, sampling_type="selection")
+                if _IDAES_AVAILABLE:
+                    idaes = CVTSampling(df_sampling, batch, sampling_type="selection")
+                else:
+                    samples = df_sampling.sample(n=batch, random_state=seed)
 
             if idaes is not None:
                 samples = idaes.sample_points()
@@ -456,9 +473,9 @@ class EDBOplus:
         y_torch = torch.tensor(y).to(**tkwargs).double()
 
         if self.acquisition_sampler == 'IIDNormalSampler':
-            sampler = IIDNormalSampler(num_samples=sobol_num_samples, collapse_batch_dims=True, seed=seed)
+            sampler = IIDNormalSampler(sample_shape=torch.Size([sobol_num_samples]), seed=seed)
         if self.acquisition_sampler == 'SobolQMCNormalSampler':
-            sampler = SobolQMCNormalSampler(num_samples=sobol_num_samples, collapse_batch_dims=True, seed=seed) 
+            sampler = SobolQMCNormalSampler(sample_shape=torch.Size([sobol_num_samples]), seed=seed)
 
         print ("Optimizing acqusition function...")
 
