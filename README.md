@@ -13,25 +13,95 @@
 
 ## Installation
 
-**(1) Create and activate a conda environment:**
+EDBO+ depends on a mix of packages that are best installed in a specific order to avoid binary incompatibilities between conda-managed and pip-managed libraries. The procedure below is the one that has been verified to work.
+
+**Prerequisites:** [Miniforge / Mamba](https://github.com/conda-forge/miniforge) is recommended over plain conda because its solver handles complex dependency graphs more reliably. If you only have conda, replace every `mamba` command with `conda`.
+
+### Step 1 — Create a Python 3.9 environment
 
 ```bash
-conda create --name edbo_env python=3.9
-conda activate edbo_env
+mamba create -n edbo_env python=3.9 -c conda-forge
+mamba activate edbo_env
 ```
 
-**(2) Clone this repository and install:**
+### Step 2 — Clone the repository
 
 ```bash
 git clone https://github.com/sergiy-vshyvenko/edboplus.git
 cd edboplus
-pip install -e .
 ```
 
-**(3) Optional — install JupyterLab to run the notebook tutorials:**
+### Step 3 — Pin setuptools before anything else
+
+Modern setuptools (≥ 60) breaks the build of several EDBO+ dependencies. Downgrade it first and remove the stale dist-info left behind:
 
 ```bash
-conda install jupyterlab
+mamba install setuptools=59.0 -c conda-forge
+rm -rf ~/miniforge3/envs/edbo_env/lib/python3.9/site-packages/setuptools-*.dist-info
+```
+
+> If your miniforge is installed elsewhere, adjust the path accordingly (e.g. `/opt/homebrew/Caskroom/miniforge/...`).
+
+### Step 4 — Install binary scientific packages via mamba
+
+Installing these through mamba rather than pip avoids numpy binary incompatibility errors (`numpy.dtype size changed`):
+
+```bash
+mamba install lxml pandas numpy scipy scikit-learn seaborn matplotlib tqdm -c conda-forge
+```
+
+### Step 5 — Editable install of EDBO+ (skip deps — already handled)
+
+```bash
+pip install -e . --no-build-isolation --no-deps
+```
+
+### Step 6 — Install remaining pip-only dependencies
+
+```bash
+pip install \
+  botorch==0.5.0 \
+  gpytorch==1.5.1 \
+  ipykernel==6.5.1 \
+  ipython==7.29.0 \
+  ipywidgets==7.6.5 \
+  Jinja2==3.0.3 \
+  joypy==0.2.6 \
+  mordred==1.2.0 \
+  ordered-set==4.0.2 \
+  pareto==1.1.1.post3 \
+  pymoo==0.5.0 \
+  sympy==1.9 \
+  --no-build-isolation
+```
+
+### Step 7 — Install IDAES (space-filling samplers)
+
+IDAES is a heavier package installed separately:
+
+```bash
+pip install idaes-pse --no-build-isolation
+```
+
+### Step 8 — Verify the installation
+
+```bash
+python -c "from edbo.plus.optimizer_botorch import EDBOplus; print('OK')"
+```
+
+You should see `OK`.
+
+### Step 9 — Install JupyterLab (for notebooks)
+
+```bash
+pip install jupyterlab
+```
+
+Always launch Jupyter **from within the activated environment**:
+
+```bash
+mamba activate edbo_env
+jupyter lab
 ```
 
 ---
