@@ -13,17 +13,16 @@
 
 ## Installation
 
-EDBO+ requires **Python 3.9** and a set of pinned scientific packages (botorch 0.5.0, torch 1.10.0, numpy 1.21.5). Follow the steps below exactly to avoid version conflicts.
+EDBO+ depends on a mix of packages that are best installed in a specific order to avoid binary incompatibilities between conda-managed and pip-managed libraries. The procedure below is the one that has been verified to work.
 
-### Step 1 — Create a clean Python 3.9 environment
+**Prerequisites:** [Miniforge / Mamba](https://github.com/conda-forge/miniforge) is recommended over plain conda because its solver handles complex dependency graphs more reliably. If you only have conda, replace every `mamba` command with `conda`.
+
+### Step 1 — Create a Python 3.9 environment
 
 ```bash
-conda create --name edbo_env python=3.9 --no-default-packages
-conda activate edbo_env
+mamba create -n edbo_env python=3.9 -c conda-forge
+mamba activate edbo_env
 ```
-
-> **Why `--no-default-packages`?**  
-> Conda sometimes pre-installs a newer numpy. Starting clean ensures pip controls all versions.
 
 ### Step 2 — Clone the repository
 
@@ -32,40 +31,67 @@ git clone https://github.com/sergiy-vshyvenko/edboplus.git
 cd edboplus
 ```
 
-### Step 3 — Install all dependencies
+### Step 3 — Pin setuptools before anything else
+
+Modern setuptools (≥ 60) breaks the build of several EDBO+ dependencies. Downgrade it first and remove the stale dist-info left behind:
 
 ```bash
-pip install -e .
+mamba install setuptools=59.0 -c conda-forge
+rm -rf ~/miniforge3/envs/edbo_env/lib/python3.9/site-packages/setuptools-*.dist-info
 ```
 
-This installs EDBO+ in editable mode along with all pinned dependencies listed in `setup.py` (botorch 0.5.0, gpytorch 1.5.1, torch 1.10.0, numpy 1.21.5, pandas 1.3.4, and others).
+> If your miniforge is installed elsewhere, adjust the path accordingly (e.g. `/opt/homebrew/Caskroom/miniforge/...`).
 
-### Step 4 — Fix numpy binary incompatibility (if needed)
+### Step 4 — Install binary scientific packages via mamba
 
-If you see this error when importing pandas or numpy:
-
-```
-ValueError: numpy.dtype size changed, may indicate binary incompatibility.
-Expected 96 from C header, got 88 from PyObject
-```
-
-run:
+Installing these through mamba rather than pip avoids numpy binary incompatibility errors (`numpy.dtype size changed`):
 
 ```bash
-pip install --force-reinstall numpy pandas scipy scikit-learn
+mamba install lxml pandas numpy scipy scikit-learn seaborn matplotlib tqdm -c conda-forge
 ```
 
-This rebuilds the packages against the same numpy binary and resolves the conflict.
+### Step 5 — Editable install of EDBO+ (skip deps — already handled)
 
-### Step 5 — Verify the installation
+```bash
+pip install -e . --no-build-isolation --no-deps
+```
+
+### Step 6 — Install remaining pip-only dependencies
+
+```bash
+pip install \
+  botorch==0.5.0 \
+  gpytorch==1.5.1 \
+  ipykernel==6.5.1 \
+  ipython==7.29.0 \
+  ipywidgets==7.6.5 \
+  Jinja2==3.0.3 \
+  joypy==0.2.6 \
+  mordred==1.2.0 \
+  ordered-set==4.0.2 \
+  pareto==1.1.1.post3 \
+  pymoo==0.5.0 \
+  sympy==1.9 \
+  --no-build-isolation
+```
+
+### Step 7 — Install IDAES (space-filling samplers)
+
+IDAES is a heavier package installed separately:
+
+```bash
+pip install idaes-pse --no-build-isolation
+```
+
+### Step 8 — Verify the installation
 
 ```bash
 python -c "from edbo.plus.optimizer_botorch import EDBOplus; print('OK')"
 ```
 
-You should see `OK`. If you see a `ModuleNotFoundError` or `ImportError`, make sure you are inside the `edbo_env` environment (`conda activate edbo_env`) and that you ran `pip install -e .` from the repo root.
+You should see `OK`.
 
-### Step 6 — Install JupyterLab (for notebooks)
+### Step 9 — Install JupyterLab (for notebooks)
 
 ```bash
 pip install jupyterlab
@@ -74,11 +100,9 @@ pip install jupyterlab
 Always launch Jupyter **from within the activated environment**:
 
 ```bash
-conda activate edbo_env
+mamba activate edbo_env
 jupyter lab
 ```
-
-> **Note:** if you launch Jupyter from a different terminal or environment, the `edbo` package will not be found.
 
 ---
 
