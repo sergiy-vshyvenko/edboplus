@@ -1,0 +1,21 @@
+Metadata-Version: 2.1
+Name: edbo
+Version: 0.2.0
+Summary: Bayesian reaction optimization as a tool for chemical synthesis.
+Home-page: https://github.com/doyle-lab-ucla/edboplus
+Author: Jose A. Garrido Torres & Abigail Gutmann Doyle
+Author-email: josegarridotorres@me.com
+License: MIT
+Keywords: Bayesian Optimization,Chemical Reaction Optimization
+Platform: UNKNOWN
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Science/Research
+Classifier: Topic :: Scientific/Engineering :: Chemistry
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+License-File: LICENSE
+
+UNKNOWN
+
