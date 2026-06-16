@@ -127,13 +127,13 @@ class EDBOplus:
             # Sometimes the LHS or CVT sampling methods return less samples than requested. Add random samples in this case.
             additional_samples = None
             if len(samples) < batch:
-                additional_samples = df.sample(n=batch-len(samples), random_state=seed, replace=True)
+                additional_samples = df_sampling.sample(n=batch-len(samples), random_state=seed, replace=True)
                 additional_samples = additional_samples.reset_index(drop=True)
             # Add the additional samples to the samples dataframe. If some of the additional_samples are already in samples, generate new ones until the batch size is reached.
             extra_seed = 1
             while len(samples) < batch:
                 samples = pd.concat([samples,additional_samples]).drop_duplicates(ignore_index=True)
-                additional_samples = df.sample(n=batch-len(samples), random_state=seed+extra_seed, replace=True)
+                additional_samples = df_sampling.sample(n=batch-len(samples), random_state=seed+extra_seed, replace=True)
                 extra_seed +=1
 
         # Get index of the best samples according to the random sampling method.
