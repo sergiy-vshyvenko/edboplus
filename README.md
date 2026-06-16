@@ -211,6 +211,45 @@ EDBOplus().generate_reaction_scope(
 )
 ```
 
+### Solvent mixtures (blends)
+
+Because PCA is a linear transform, a **blend** of two solvents can be represented by
+interpolating their PC coordinates. For a mixture with fraction `f` of solvent A and `1 − f` of B:
+
+```
+PC_mix = f · PC_A + (1 − f) · PC_B
+```
+
+This is exactly the PCA score of the averaged physicochemical descriptors, so a blend lands on
+the straight line between its pure components in PC space. The helpers in `edbo.plus.mixtures`
+build a lookup-shaped DataFrame you feed straight into `encodings`:
+
+```python
+from edbo.plus.mixtures import make_mixtures, binary_ratio_grid
+
+# Named blends (weights are normalized → {A:1, B:1} = 50:50)
+blends = make_mixtures({
+    'DMSO/DCM 50:50': {'DMSO [Dimethylsulfoxide]': 1, 'DCM [Dichloromethane]': 1},
+})
+
+# Or a ratio grid for EDBO+ to optimize over (pure endpoints included)
+grid = binary_ratio_grid('DMSO [Dimethylsulfoxide]', 'DCM [Dichloromethane]',
+                         fractions=[0, 0.25, 0.5, 0.75, 1.0])
+
+EDBOplus().generate_reaction_scope(
+    components={'solvent': grid['Name'].tolist(), 'temperature': [25, 50]},
+    encodings={'solvent': {'file': grid, 'key': 'Name', 'features': ['PC1', 'PC2', 'PC3', 'PC4']}},
+    filename='reaction.csv',
+)
+EDBOplus().run(filename='reaction.csv', objectives=['yield'],
+               objective_mode=['max'], exclude_columns=['solvent'], batch=4)
+```
+
+Use `combine_lookups(pures, blends)` to offer pure solvents and blends as choices in the same
+scope. Fractions are a **linear, mole-like basis** used as given (no volume→mole conversion) —
+exact for averaging molecular descriptors, an approximation for non-ideal bulk behaviour. See
+the [solvent mixtures tutorial](examples/tutorials/solvent_mixtures.ipynb) for a full walkthrough.
+
 ---
 
 ## Tutorials
@@ -220,6 +259,7 @@ EDBOplus().generate_reaction_scope(
 | [`examples/tutorials/1_CLI_example.ipynb`](examples/tutorials/1_CLI_example.ipynb) | Basic workflow: scope generation, initialization, iterative optimization |
 | [`examples/tutorials/PCA_example.ipynb`](examples/tutorials/PCA_example.ipynb) | PCA solvent encodings: auto-detection, mixed encoding types, reading model predictions |
 | [`examples/tutorials/OHE_vs_PCA_benchmark.ipynb`](examples/tutorials/OHE_vs_PCA_benchmark.ipynb) | Side-by-side benchmark: OHE vs PCA encoding on the BMS cross-coupling dataset (yield + cost) |
+| [`examples/tutorials/solvent_mixtures.ipynb`](examples/tutorials/solvent_mixtures.ipynb) | Solvent mixtures: interpolating PCA coordinates to optimize over blend ratios |
 
 ---
 
